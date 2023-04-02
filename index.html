@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Getting Started with Chart JS with www.chartjs3.com</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        font-family: sans-serif;
+      }
+      .chartMenu {
+        width: 100vw;
+        height: 40px;
+        background: #1A1A1A;
+        color: rgba(54, 162, 235, 1);
+      }
+      .chartMenu p {
+        padding: 10px;
+        font-size: 20px;
+      }
+      .chartCard {
+        width: 100vw;
+        height: calc(100vh - 40px);
+        background: rgba(54, 162, 235, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .chartBox {
+        width: 80%;
+        padding: 20px;
+        border-radius: 20px;
+        border: solid 3px rgba(54, 162, 235, 1);
+        background: white;
+      }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" integrity="sha512-5A8nwdMOWrSz20fDsjczgUidUBR8liPYU+WymTZP1lmY9G6Oc7HlZv156XqnsgNUzTyMefFTcsFH/tnJE/+xBg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  </head>
+  <body>
+    <div class="chartMenu">
+      <p>WWW.CHARTJS3.COM (Chart JS <span id="chartVersion"></span>)</p>
+    </div>
+    <div class="chartCard">
+      <div class="chartBox">
+        <canvas id="myChart"></canvas>
+        <input type="month" onchange="chartFilter(this)">   달력을 추가
+      </div>
+    </div>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script>
+    // setup 
+    const DATA_COUNT = 21;
+    
+    const data = {
+      // labels: ['Tom Jones', 'Heidrum Kapscher', 'Robert Klam', 'Hubert Klammer', 'Lala li', 'Max Miller', 'Iron Neuer', 'Tommy Stein', 'Bella Suder'],
+      datasets: [{
+        label: 'Praktika',
+        data: [
+          {x: ['2023-04-19', '2023-04-24'], y: 'Tom Jones', name: 'Tom Jones', status: 2},
+          {x: ['2023-04-19', '2023-04-24'], y: 'Heidrum Kapscher', name: 'Heidrum Kapscher', status: 2}, // completed
+          {x: ['2023-04-18', '2023-04-28'], y: 'Robert Klam', name: 'Robert Klam', status: 2},  // completed
+          {x: ['2023-04-18', '2023-04-28'], y: 'Hubert Klammer', name: 'Hubert Klammer', status: 2},  // completed
+          {x: ['2023-04-19', '2023-04-27'], y: 'Lala li', name: 'Lala li', status: 2},  // completed
+          {x: ['2023-06-05', '2023-06-09'], y: 'Max Miller', name: 'Max Miller', status: 0}, // delayed
+          {x: ['2023-06-05', '2023-06-09'], y: 'Iron Neuer', name: 'Iron Neuer', status: 0}, // delayed
+          {x: ['2023-06-06', '2023-06-16'], y: 'Tommy Stein', name: 'Tommy Stein', status: 1}, // pending
+          {x: ['2023-06-06', '2023-06-16'], y: 'Bella Suder', name: 'Bella Suder', status: 1} // pending
+        ],
+        backgroundColor: [
+          'rgba(28, 192, 154, 1)', 
+          'rgba(28, 192, 154, 1)',
+          'rgba(28, 192, 154, 1)',
+          'rgba(28, 192, 154, 1)',
+          'rgba(28, 192, 154, 1)',
+          'rgba(196, 239, 229, 1)',
+          'rgba(196, 239, 229, 1)',
+          'rgba(196, 239, 229, 1)',
+          'rgba(196, 239, 229, 1)'
+        ],
+        // borderColor: [
+        //   'rgba(255, 26, 104, 1)',
+        //   'rgba(54, 162, 235, 1)',
+        //   'rgba(255, 206, 86, 1)',
+        //   'rgba(75, 192, 192, 1)',
+        //   'rgba(153, 102, 255, 1)',
+        //   'rgba(255, 159, 64, 1)',
+        //   'rgba(0, 0, 0, 1)'
+        // ],
+        // borderWidth: 1,     // 막대 border 
+        barPercentage: 0.7,    // 막대 두께 (%)
+        borderRadius: Number.MAX_VALUE,  // 막대 둥금
+        borderSkipped: false,
+      }]
+    };
+    
+    // todayLine plugin block
+    const todayLine = {
+      id: 'todayLine',
+      afterDatasetsDraw(chart, args, pluginOptions) {
+        const { ctx, data, chartArea: { top, bottom, left, right }, scales: { x, y } } = chart;
+        
+        ctx.save();
+        
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#F15D23'; // 선 색
+        ctx.setLineDash([6, 6]);  // 색 6px, 투명 6px
+        ctx.moveTo(x.getPixelForValue(new Date()), top);
+        ctx.lineTo(x.getPixelForValue(new Date()), bottom);
+        ctx.stroke();
+        ctx.restore();
+        // 현재 선 위에 화살표
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#F15D23';
+        ctx.fillStyle = '#F15D23';        
+        ctx.moveTo(x.getPixelForValue(new Date()), top + 3);
+        ctx.lineTo(x.getPixelForValue(new Date()) - 6, top - 6);
+        ctx.lineTo(x.getPixelForValue(new Date()) + 6, top - 6);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fill();
+        ctx.restore();
+        
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillStyle = '#a5a5a5';
+        ctx.textAlign = 'center';
+        ctx.fillText('heute', x.getPixelForValue(new Date()), bottom + 12);
+        ctx.restore();
+      }
+    }
+    // 오른쪽에 status 
+    const status = {
+      id: 'status',
+      afterDatasetsDraw(chart, args, pluginOptions) {
+        const { ctx, data, chartArea: { top, bottom, left, right }, scales: { x, y } } = chart;
+        
+        const icons = ['\uf00d', '\uf110', '\uf00c'];
+        const colors = ['rgba(236, 220, 196, 1)', 'rgba(196, 239, 229, 1)', 'rgba(28, 192, 154, 1)'];
+        const angle = Math.PI / 180;
+        
+        ctx.save();       // 매우 중요 set
+        ctx.font = 'bolder 12px FontAwesome';
+        //ctx.fillStyle = 'black';     // tag의 color
+        ctx.textBaseline = 'middle';    // tag 세로가운데정렬
+        ctx.textAlign = 'center';
+        data.datasets[0].data.forEach((datapoint, index) => {
+          ctx.beginPath();
+          ctx.fillStyle = colors[datapoint.status];
+          ctx.arc(right + 50, y.getPixelForValue(index), 12, angle * 0, angle * 360, false);     // ctx.arc(x, y, radius, angleS, angleE, false); 원그리기
+          ctx.closePath();
+          ctx.fill();          
+          
+          ctx.fillStyle = 'white'; 
+          ctx.fillText(icons[datapoint.status], right + 50, y.getPixelForValue(index));
+          // ctx.fillText(datapoint.status, right + 50, y.getPixelForValue(index));    // ('text', x:px, y:index Nummer) status text를 넣었다가
+        })
+        ctx.restore();    // 매우 중요 set
+      }
+    }
+    // name tag를 왼쪽에
+    const assignedTasks = {
+      id: 'assignedTasks',
+      afterDatasetsDraw(chart, args, pluginOptions) {
+        const { ctx, data, chartArea: { top, bottom, left, right }, scales: { x, y } } = chart;
+        
+        ctx.save();
+        ctx.font = 'bolder 12px sans-serif';
+        ctx.fillStyle = 'black';     // tag의 color
+        ctx.textBaseline = 'middle';    // tag 세로가운데정렬
+        ctx.textAlign = 'left';
+        data.datasets[0].data.forEach((datapoint, index) => {
+          ctx.fillText(datapoint.y, 10, y.getPixelForValue(index));    // ('text', x:px, y:index Nummer)          
+        })
+        ctx.restore(); 
+      } 
+    }
+    
+    const lastDay = {
+      
+      
+    }
+    
+    // config 
+    const config = {
+      type: 'bar',
+      data,
+      options: {
+        animation: false,
+        layout: {              // x축에 옵션이 생략되고, bar에 이름이 보이도록 한다. 
+          padding: {
+            left: 24,
+            right: 100,
+            bottom: 20,
+          }
+        },
+        indexAxis: 'y',        // 기본 막대 그래프로 가로 그래프로 수정
+        scales: {
+          x: {
+            position: 'top',
+            min: '2023-04-01',  // 시작점을 오늘 moment로 바꾸는 방법 찾아보기   min: new Date('2019-01-01').valueOf(),
+            max: '2023-06-22',
+            type: 'time',
+            time: {
+              displayFormats: {
+                day: 'dd MMM',     // todo: font size를 줄일 수 있을까? 
+              }
+            },
+          },
+          y: {
+            display: false,   // x축 이름 생략
+          }
+        },
+        plugins: {
+          legend: {
+            display: false    // 범례 생략
+          },
+          tooltip: {
+            displayColors: false,
+            yAlign: 'left',    // 추가 인포가 bar 오른쪽 위로 고정한다. 
+            callbacks: {
+              label: (ctx) => {
+                return '';
+              },
+              title: (ctx) => {
+                // console.log(ctx[0]);
+                const startDate = new Date(ctx[0].raw.x[0]);
+                const endDate = new Date(ctx[0].raw.x[1]);
+                const formattedStartDate = startDate.toLocaleString("de-DE", {
+                  // year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  // hour12: true
+                });
+                const formattedEndDate = endDate.toLocaleString("de-DE", {
+                  // year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                });
+                return [ctx[0].raw.name , `Praktikum Zeitraum: ${formattedStartDate} - ${formattedEndDate}`];
+              }
+            }
+          }
+        },
+      },
+      plugins: [ 
+        todayLine,           // 오늘이 언제인지 알려줄 선.
+        // assignedTasks,     // 왼쪽에 추가 태그
+        status ]             // 오른쪽 태그인데, 원 그리고 안에 아이콘 넣고, 상태에 따라서 색을 변경
+    };
+
+    // render init block
+    const myChart = new Chart(
+      document.getElementById('myChart'),
+      config
+    );
+
+    // Instantly assign Chart.js version
+    const chartVersion = document.getElementById('chartVersion');
+    chartVersion.innerText = Chart.version;
+    
+    function chartFilter(date) {
+      const year = date.value.substring(0, 4);
+      const month = date.value.substring(5, 7);
+      const lastDay = (y, m) => {
+        return new Date(y, m, 0).getDate();
+      }
+      const startDate = `${year}-${month}-01`;
+      const endDate = `${year}-${month}-${lastDay(year, month)}`;
+      // const startDate = new Date();
+      // const endDate = new Date(startDate.setDate(startDate.getDate() + 21));;
+      
+      myChart.config.options.scales.x.min = startDate;
+      myChart.config.options.scales.x.max = endDate;
+      myChart.update();
+    }
+    
+    </script>
+
+  </body>
+</html>
